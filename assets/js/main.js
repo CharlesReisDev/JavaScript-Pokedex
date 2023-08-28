@@ -1,40 +1,44 @@
+const pokemonList = document.getElementById(`pokemonList`)
+const loadMoreButton = document.getElementById(`loadMoreButton`)
+const maxRecords = 649
+const limit = 200;
+let offset = 0;
 
-console.log('Sucesso!')
 
-const offset = 0
-const limit = 10
-const url = `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`
 
-function convertPokemonToLi(pokemon) {
-    return `
-        <li class="pokemon">
-            <span class="number">#001</span>
-            <span class="name">${pokemon.name}</span>
-
-            <div class="detail">
-                <ol class="type">
-                    <li class="type">grass</li>
-                    <li class="type">poison</li>
-                </ol>
-
-                <img src="" alt="${pokemon.name}">
-            </div>
-        </li>
-    `
+function loadPokemonItens(offset, limit){
+    pokeApi.getPokemons(offset, limit).then((pokemons = []) => {
+        const newHtml = pokemons.map((pokemon) => `
+            <li class="pokemon ${pokemon.type}">
+                <span class="number">#${pokemon.number}</span>
+                <span class="name">${pokemon.name}</span>
+                <div class="detail">
+                    <ol class="types">
+                        ${pokemon.types.map((type) => `<li class="type ${type}">${type}</li>`).join('')}
+                    </ol>
+    
+                <img src="${pokemon.photo}" 
+                    alt="${pokemon.name}">
+                </div>
+            </li>
+        `
+        ).join('')
+        pokemonList.innerHTML += newHtml
+    })   
 }
 
-console.log(document.getElementById(`pokemonList`))
+loadPokemonItens(offset, limit)
 
-fetch(url)
-    .then((response) => response.json())
-    .then((jsonBody) => jsonBody.results)
-    .then((pokemonList) => {
-        
-        for (let i = 0; i < pokemonList.length; i++) {
-            const pokemon = pokemonList[i];
-            console.log(convertPokemonToLi(pokemon))
-        }
+loadMoreButton.addEventListener(`click`, () => {
+    offset += limit
+    const qtdRecordsWithNexPage = offset + limit
 
-    })
-        .catch((error) => console.error(error))
+    if (qtdRecordsWithNexPage >= maxRecords) {
+        const newLimit = maxRecords - offset
+        loadPokemonItens(offset, newLimit)
 
+        loadMoreButton.parentElement.removeChild(loadMoreButton)
+    } else {
+        loadPokemonItens(offset, limit)
+    }
+})
